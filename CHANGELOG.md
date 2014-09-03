@@ -1,4 +1,4 @@
-# 1.2.1
+# 1.2.1 (2014-09-03)
 
 ## Bug fixes
  - large memory leak fixed for non product import (association, product group, attribute, categories, etc...)
