@@ -33,15 +33,13 @@ datagrid:
             id: ~
         sorters:
             columns:
-                is_associated:
-                    data_name: is_associated
                 code:
                     data_name: g.code
                 label:
                     data_name: groupLabel
                 type:
                     data_name: typeLabel
-            default:
+            updated:
                 is_associated: %oro_datagrid.extension.orm_sorter.class%::DIRECTION_DESC
         filters:
             columns:

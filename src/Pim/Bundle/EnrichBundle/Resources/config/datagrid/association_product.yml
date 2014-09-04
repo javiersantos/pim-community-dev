@@ -56,9 +56,6 @@ datagrid:
             id: ~
         sorters:
             columns:
-                is_associated:
-                    data_name: is_associated
-                    sorter:    product_is_associated
                 family:
                     data_name: familyLabel
                     sorter:    product_family
@@ -75,7 +72,7 @@ datagrid:
                     data_name: updated
                     sorter:    product_field
             default:
-                is_associated: %oro_datagrid.extension.orm_sorter.class%::DIRECTION_DESC
+                updated: %oro_datagrid.extension.orm_sorter.class%::DIRECTION_DESC
         filters:
             columns:
                 is_associated:
