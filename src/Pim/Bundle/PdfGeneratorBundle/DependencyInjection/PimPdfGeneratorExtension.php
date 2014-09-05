@@ -25,5 +25,7 @@ class PimPdfGeneratorExtension extends Extension
         $loader->load('controllers.yml');
         $loader->load('renderers.yml');
         $loader->load('builders.yml');
+        $loader->load('writers.yml');
+        $loader->load('processors.yml');
     }
 }

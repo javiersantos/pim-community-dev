@@ -1,0 +1,6 @@
+parameters:
+    pim_pdf_generator.writer.pdf.class: Pim\Bundle\PdfGeneratorBundle\Writer\ProductWriter
+
+services:
+    pim_pdf_generator.writer.pdf:
+        class: %pim_pdf_generator.writer.pdf.class%

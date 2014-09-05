@@ -1,0 +1,15 @@
+connector:
+    name: Akeneo PDF Connector
+    jobs:
+        pdf_product_export:
+            title: pim_pdf_generator.jobs.pdf_product_export.title
+            type:  export
+            steps:
+                export:
+                    title:     pim_pdf_generator.jobs.pdf_product_export.export.title
+                    services:
+                        reader:    pim_base_connector.reader.doctrine.product
+                        processor: pim_pdf_generator.processor.product_pdf
+                        writer:    pim_pdf_generator.writer.pdf
+                    parameters:
+                        batch_size: 10

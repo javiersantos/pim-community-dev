@@ -48,7 +48,7 @@ class DompdfBuilder implements PdfBuilderInterface
     protected function render($html)
     {
         // DOMPDF doesn't follow PSR convention, it uses classmap in autoload
-        define('DOMPDF_ENABLE_AUTOLOAD', false);
+        //define('DOMPDF_ENABLE_AUTOLOAD', false);
         $filePath = $this->rootDir."/../vendor/dompdf/dompdf/dompdf_config.inc.php";
         if (file_exists($filePath)) {
             require_once($filePath);
@@ -71,4 +71,4 @@ class DompdfBuilder implements PdfBuilderInterface
     {
         return $this->dompdf->output();
     }
-} 
+}

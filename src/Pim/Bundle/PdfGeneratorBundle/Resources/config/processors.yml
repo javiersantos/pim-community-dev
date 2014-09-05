@@ -1,0 +1,9 @@
+parameters:
+    pim_pdf_generator.processor.product_pdf.class: Pim\Bundle\PdfGeneratorBundle\Processor\ProductPdfProcessor
+
+services:
+    pim_pdf_generator.processor.product_pdf:
+        class: %pim_pdf_generator.processor.product_pdf.class%
+        arguments:
+            - @pim_pdf_generator.renderer.registry
+            - @pim_catalog.manager.channel
