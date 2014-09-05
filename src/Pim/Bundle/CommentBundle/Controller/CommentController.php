@@ -17,6 +17,7 @@ use Symfony\Component\Translation\TranslatorInterface;
 
 use Doctrine\Common\Persistence\ManagerRegistry;
 
+use Pim\Bundle\CommentBundle\Entity\Comment;
 use Pim\Bundle\CommentBundle\Builder\CommentBuilder;
 use Pim\Bundle\EnrichBundle\AbstractController\AbstractDoctrineController;
 
@@ -76,16 +77,9 @@ class CommentController extends AbstractDoctrineController
         }
 
         $comment = $this->commentBuilder->buildCommentWithoutSubject($this->getUser());
-        $createForm = $this->createForm(
-            'pim_comment_comment',
-            $comment
-        );
-        $replyForm = $this->createForm(
-            'pim_comment_comment',
-            $comment
-        );
-
+        $createForm = $this->createForm('pim_comment_comment', $comment);
         $createForm->submit($this->request);
+
         if ($createForm->isValid()) {
             $manager = $this->getManagerForClass(ClassUtils::getClass($comment));
             $manager->persist($comment);
@@ -96,6 +90,9 @@ class CommentController extends AbstractDoctrineController
             //TODO: change this
             $this->addFlash('error', 'flash.comment.create.error');
         }
+
+        $reply = $this->commentBuilder->buildReply($comment, $this->getUser());
+        $replyForm = $this->createForm('pim_comment_comment', $reply, ['is_reply' => true]);
 
         return $this->render(
             'PimCommentBundle:Comment:_thread.html.twig',
@@ -110,28 +107,29 @@ class CommentController extends AbstractDoctrineController
      * Reply to a comment
      *
      * @param Request $request
-     * @param         $id
      *
      * @return \Symfony\Component\HttpFoundation\Response
      * @throws \LogicException
      */
-    public function replyAction(Request $request, $id)
+    public function replyAction(Request $request)
     {
         if (true !== $request->isXmlHttpRequest()) {
             throw new \LogicException('The request should be an Xml Http request.');
         }
 
-        $manager = $this->getManagerForClass($this->commentClassName);
-        $comment = $manager->find($this->commentClassName, $id);
-        $reply = $this->commentBuilder->buildReply($comment, $this->getUser());
-
-        $replyForm = $this->createForm(
-            'pim_comment_comment',
-            $reply
-        );
-
+        $reply = new Comment();
+        $replyForm = $this->createForm('pim_comment_comment', $reply, ['is_reply' => true]);
         $replyForm->submit($this->request);
+
         if ($replyForm->isValid()) {
+            $now = new \DateTime();
+            $reply->setCreatedAt($now);
+            $reply->setRepliedAt($now);
+            $reply->setAuthor($this->getUser());
+            $comment = $reply->getParent();
+            $comment->setRepliedAt($now);
+
+            $manager = $this->getManagerForClass($this->commentClassName);
             $manager->persist($reply);
             $manager->flush();
             //TODO: change this
