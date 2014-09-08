@@ -4,6 +4,8 @@ namespace Context;
 
 use Behat\MinkExtension\Context\RawMinkContext;
 use Behat\Behat\Context\Step;
+use Behat\Behat\Event\BaseScenarioEvent;
+use Behat\Behat\Event\StepEvent;
 use SensioLabs\Behat\PageObjectExtension\Context\PageObjectAwareInterface;
 use SensioLabs\Behat\PageObjectExtension\Context\PageFactory;
 use Akeneo\Bundle\BatchBundle\Entity\JobInstance;
@@ -82,12 +84,17 @@ class NavigationContext extends RawMinkContext implements PageObjectAwareInterfa
     }
 
     /**
+     * @param BaseScenarioEvent $event
+     *
      * @AfterScenario
      */
-    public function resetCurrentPage()
+    public function resetCurrentPage(BaseScenarioEvent $event)
     {
-        $script = 'sessionStorage.clear(); typeof $ !== "undefined" && $(window).off("beforeunload");';
-        $this->getMainContext()->executeScript($script);
+        if ($event->getResult() !== StepEvent::UNDEFINED) {
+            $script = 'sessionStorage.clear(); typeof $ !== "undefined" && $(window).off("beforeunload");';
+            $this->getMainContext()->executeScript($script);
+        }
+
         $this->currentPage = null;
     }
 
@@ -387,6 +394,7 @@ class NavigationContext extends RawMinkContext implements PageObjectAwareInterfa
     }
 
     /**
+     * @param string      $action
      * @param JobInstance $job
      *
      * @return \Behat\Behat\Context\Step\Then
@@ -500,6 +508,14 @@ class NavigationContext extends RawMinkContext implements PageObjectAwareInterfa
     public function iShouldBeOnTheLocalesPage()
     {
         $this->assertAddress($this->getPage('Locale index')->getUrl());
+    }
+
+    /**
+     * @Given /^I should be on the families page$/
+     */
+    public function iShouldBeOnTheFamiliesPage()
+    {
+        $this->assertAddress($this->getPage('Family index')->getUrl());
     }
 
     /**

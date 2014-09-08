@@ -8,25 +8,22 @@ use Pim\Bundle\CatalogBundle\Model\Association;
 use Pim\Bundle\CatalogBundle\Entity\Family;
 use Pim\Bundle\CatalogBundle\Entity\Group;
 use Pim\Bundle\CatalogBundle\Entity\AssociationType;
-use Pim\Bundle\CatalogBundle\Entity\Attribute;
+use Pim\Bundle\CatalogBundle\Model\AbstractAttribute;
 use Pim\Bundle\CatalogBundle\Entity\AttributeOption;
 use Pim\Bundle\TransformBundle\Normalizer\Filter\NormalizerFilterInterface;
 
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 use Symfony\Component\Serializer\SerializerInterface;
-use Symfony\Component\Serializer\Exception\InvalidArgumentException;
 use Doctrine\Common\Collections\Collection;
 
 class ProductNormalizerSpec extends ObjectBehavior
 {
-    function let(SerializerInterface $serializer,
-                NormalizerFilterInterface $filter
-    ) {
+    function let(SerializerInterface $serializer, NormalizerFilterInterface $filter)
+    {
         $serializer->implement('Symfony\Component\Serializer\Normalizer\NormalizerInterface');
         $this->setSerializer($serializer);
         $this->setFilters([$filter]);
-
     }
 
     function it_is_a_serializer_aware_normalizer()
@@ -53,10 +50,11 @@ class ProductNormalizerSpec extends ObjectBehavior
     function it_normalizes_product(
         $filter,
         ProductInterface $product,
-        Attribute $skuAttribute,
+        AbstractAttribute $skuAttribute,
         AbstractProductValue $sku,
         Collection $values,
-        Family $family
+        Family $family,
+        $serializer
     ) {
         $family->getCode()->willReturn('shoes');
         $skuAttribute->getCode()->willReturn('sku');
@@ -75,6 +73,8 @@ class ProductNormalizerSpec extends ObjectBehavior
         $product->getValues()->willReturn($values);
         $filter->filter(Argument::cetera())->willReturn([$sku]);
 
+        $serializer->normalize($sku, 'flat', Argument::any())->willReturn(['sku' => 'sku-001']);
+
         $this->normalize($product, 'flat', [])->shouldReturn(
             [
                 'sku'        => 'sku-001',
@@ -89,7 +89,7 @@ class ProductNormalizerSpec extends ObjectBehavior
     function it_normalizes_product_with_associations(
         $filter,
         ProductInterface $product,
-        Attribute $skuAttribute,
+        AbstractAttribute $skuAttribute,
         AbstractProductValue $sku,
         Association $myCrossSell,
         AssociationType $crossSell,
@@ -102,7 +102,8 @@ class ProductNormalizerSpec extends ObjectBehavior
         AbstractProductValue $skuAssocProduct1,
         AbstractProductValue $skuAssocProduct2,
         Collection $values,
-        Family $family
+        Family $family,
+        $serializer
     ) {
         $family->getCode()->willReturn('shoes');
         $skuAttribute->getCode()->willReturn('sku');
@@ -138,6 +139,8 @@ class ProductNormalizerSpec extends ObjectBehavior
         $product->getValues()->willReturn($values);
         $filter->filter(Argument::cetera())->willReturn([$sku]);
 
+        $serializer->normalize($sku, 'flat', Argument::any())->willReturn(['sku' => 'sku-001']);
+
         $this->normalize($product, 'flat', [])->shouldReturn(
             [
                 'sku'        => 'sku-001',
@@ -157,8 +160,8 @@ class ProductNormalizerSpec extends ObjectBehavior
         $filter,
         $serializer,
         ProductInterface $product,
-        Attribute $skuAttribute,
-        Attribute $colorsAttribute,
+        AbstractAttribute $skuAttribute,
+        AbstractAttribute $colorsAttribute,
         AbstractProductValue $sku,
         AbstractProductValue $colors,
         AttributeOption $red,
@@ -187,10 +190,12 @@ class ProductNormalizerSpec extends ObjectBehavior
         $product->getCategoryCodes()->willReturn('');
         $product->getAssociations()->willReturn([]);
         $product->getValues()->willReturn($values);
-        $filter->filter($values, ['identifier' => $sku, 'scopeCode' => null, 'localeCodes' => []])->willReturn([$sku, $colors]);
-        $context =  ["scopeCode" => null, "localeCodes" => [], "field_name" => "colors", "metric_format" => "multiple_fields"];
+        $filter
+            ->filter($values, ['identifier' => $sku, 'scopeCode' => null, 'localeCodes' => []])
+            ->willReturn([$sku, $colors]);
 
-        $serializer->normalize(Argument::any(), 'flat', $context)->willReturn(['colors' => 'red, blue']);
+        $serializer->normalize($sku, 'flat', Argument::any())->willReturn(['sku' => 'sku-001']);
+        $serializer->normalize($colors, 'flat', Argument::any())->willReturn(['colors' => 'red, blue']);
 
         $this->normalize($product, 'flat', [])->shouldReturn(
             [

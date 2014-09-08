@@ -11,7 +11,6 @@ use Akeneo\Bundle\BatchBundle\Entity\StepExecution;
 use Akeneo\Bundle\BatchBundle\Step\StepExecutionAwareInterface;
 use Akeneo\Bundle\BatchBundle\Item\InvalidItemException;
 use Pim\Bundle\CatalogBundle\Validator\Constraints\File as AssertFile;
-use Pim\Bundle\BaseConnectorBundle\Archiver\InvalidItemsCsvArchiver;
 
 /**
  * Csv reader
@@ -73,17 +72,6 @@ class CsvReader extends FileReader implements
      * @var SplFileObject
      */
     protected $csv;
-
-    /** @var InvalidItemsCsvArchiver */
-    protected $archiver;
-
-    /**
-     * @param InvalidItemsCsvArchiver $archiver
-     */
-    public function __construct(InvalidItemsCsvArchiver $archiver)
-    {
-        $this->archiver = $archiver;
-    }
 
     /**
      * Remove the extracted directory
@@ -264,7 +252,6 @@ class CsvReader extends FileReader implements
             );
             $this->csv->setCsvControl($this->delimiter, $this->enclosure, $this->escape);
             $this->fieldNames = $this->csv->fgetcsv();
-            $this->archiver->setHeader($this->fieldNames);
         }
 
         $data = $this->csv->fgetcsv();

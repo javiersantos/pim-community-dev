@@ -3,10 +3,10 @@
 namespace spec\Pim\Bundle\CatalogBundle\Doctrine;
 
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 use Doctrine\Common\Persistence\ManagerRegistry;
 use Doctrine\ORM\ORMException;
 use Doctrine\ODM\MongoDB\MongoDBException;
+use PhpSpec\Exception\Example\SkippingException;
 
 /**
  * @require Doctrine\ODM\MongoDB\MongoDBException
@@ -46,11 +46,15 @@ class SmartManagerRegistrySpec extends ObjectBehavior
         $odmRegistry,
         $customRegistry
     ) {
+        if (!class_exists('Doctrine\ODM\MongoDB\MongoDBException', false)) {
+            throw new SkippingException('Mongo ODM is not installed');
+        }
         $ormRegistry->getAliasNamespace('foo')->willThrow(new ORMException());
         $odmRegistry->getAliasNamespace('foo')->willThrow(new MongoDBException());
         $customRegistry->getAliasNamespace('foo')->willReturn('\Foo');
 
         $this->getAliasNamespace('foo')->shouldReturn('\Foo');
+
     }
 
     function its_getAliasNamespace_method_throws_exception_when_no_doctrine_registry_is_able_to_get_alias_namespace(
@@ -58,12 +62,17 @@ class SmartManagerRegistrySpec extends ObjectBehavior
         $odmRegistry,
         $customRegistry
     ) {
+        if (!class_exists('Doctrine\ODM\MongoDB\MongoDBException', false)) {
+            throw new SkippingException('Mongo ODM is not installed');
+        }
         $ormRegistry->getAliasNamespace('foo')->willThrow(new ORMException());
         $odmRegistry->getAliasNamespace('foo')->willThrow(new MongoDBException());
         $customRegistry->getAliasNamespace('foo')->willThrow(new ORMException());
 
         $this
-            ->shouldThrow(new \LogicException('No registered doctrine registry was able to get the alias namespace "foo"'))
+            ->shouldThrow(
+                new \LogicException('No registered doctrine registry was able to get the alias namespace "foo"')
+            )
             ->duringGetAliasNamespace('foo');
     }
 

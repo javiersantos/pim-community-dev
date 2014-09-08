@@ -4,7 +4,6 @@ namespace spec\Pim\Bundle\DataGridBundle\Datasource;
 
 use Oro\Bundle\DataGridBundle\Datasource\ResultRecord;
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 use Doctrine\Common\Persistence\ObjectManager;
 use Oro\Bundle\DataGridBundle\Datagrid\DatagridInterface;
 use Pim\Bundle\DataGridBundle\Datasource\ResultRecord\HydratorInterface;
@@ -63,7 +62,7 @@ class DatasourceSpec extends ObjectBehavior
             'entity' => 'Product'
         ];
         $manager->getRepository('Product')->willReturn($repository);
-        $repository->createQueryBuilder()->shouldBeCalled();
+        $repository->createQueryBuilder('o')->shouldBeCalled();
         $grid->setDatasource($this)->shouldBeCalled();
         $this->process($grid, $config);
     }

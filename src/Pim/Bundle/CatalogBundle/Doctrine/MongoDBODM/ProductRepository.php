@@ -3,9 +3,9 @@
 namespace Pim\Bundle\CatalogBundle\Doctrine\MongoDBODM;
 
 use Doctrine\ODM\MongoDB\DocumentRepository;
-use Doctrine\ODM\MongoDB\Query\Expr;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ODM\MongoDB\Query\Builder as QueryBuilder;
+use Pim\Bundle\CatalogBundle\Entity\Repository\CategoryRepository;
 use Pim\Bundle\CatalogBundle\Repository\ReferableEntityRepositoryInterface;
 use Pim\Bundle\CatalogBundle\Repository\ProductRepositoryInterface;
 use Pim\Bundle\CatalogBundle\Repository\AssociationRepositoryInterface;
@@ -32,9 +32,7 @@ class ProductRepository extends DocumentRepository implements
     ReferableEntityRepositoryInterface,
     AssociationRepositoryInterface
 {
-    /**
-    * @var ProductQueryBuilder
-    */
+    /** @var ProductQueryBuilder */
     protected $productQB;
 
     /**
@@ -44,10 +42,11 @@ class ProductRepository extends DocumentRepository implements
      */
     protected $entityManager;
 
-    /**
-     * @var AttributeRepository
-     */
+    /** @var AttributeRepository */
     protected $attributeRepository;
+
+    /** @var CategoryRepository */
+    protected $categoryRepository;
 
     /**
      * Set the EntityManager
@@ -66,11 +65,25 @@ class ProductRepository extends DocumentRepository implements
      *
      * @param AttributeRepository $attributeRepository
      *
-     * @return ProductRepository $this
+     * @return ProductRepository
      */
     public function setAttributeRepository(AttributeRepository $attributeRepository)
     {
         $this->attributeRepository = $attributeRepository;
+
+        return $this;
+    }
+
+    /**
+     * Set the category repository
+     *
+     * @param CategoryRepository $categoryRepository
+     *
+     * @return ProductRepository
+     */
+    public function setCategoryRepository(CategoryRepository $categoryRepository)
+    {
+        $this->categoryRepository = $categoryRepository;
 
         return $this;
     }
@@ -108,12 +121,7 @@ class ProductRepository extends DocumentRepository implements
         $result = $qb->getQuery()->execute();
 
         if ($result->count() > 1) {
-            throw new \LogicException(
-                sprintf(
-                    'Many products have been found that match criteria:' . "\n" . '%s',
-                    print_r($criteria, true)
-                )
-            );
+            throw new \LogicException('Many products have been found that match criteria.');
         }
 
         return $result->getNext();
@@ -141,6 +149,11 @@ class ProductRepository extends DocumentRepository implements
                     ->equals(100)
             );
         }
+
+        $categoryIds = $this->categoryRepository->getAllChildrenIds($channel->getCategory());
+        $qb->addAnd(
+            $qb->expr()->field('categoryIds')->in($categoryIds)
+        );
 
         return $qb;
     }
@@ -683,5 +696,42 @@ class ProductRepository extends DocumentRepository implements
         }
 
         return $qb;
+    }
+
+    /**
+     * @param integer $productId
+     * @param integer $assocTypeCount
+     *
+     * @TODO: Make some refactoring with PublishedProductRepository
+     */
+    public function removeAssociatedProduct($productId, $assocTypeCount)
+    {
+        $mongoRef = [
+            '$ref' => $this->dm->getClassMetadata($this->documentName)->getCollection(),
+            '$id' => new \MongoId($productId),
+            '$db' => $this->dm->getConfiguration()->getDefaultDB(),
+        ];
+
+        $collection = $this->dm->getDocumentCollection($this->documentName);
+
+        // we iterate over the number of association types because the query removes only the product that
+        // belongs to the first association (instead of removing it in existing associations)
+        for ($i = 0; $i < $assocTypeCount; $i++) {
+            $collection->update(
+                [
+                    'associations' => [
+                        '$elemMatch' => [
+                            'products' => $mongoRef
+                        ]
+                    ]
+                ],
+                [
+                    '$pull' => [
+                        'associations.$.products' => $mongoRef
+                    ]
+                ],
+                [ 'multiple' => 1 ]
+            );
+        }
     }
 }

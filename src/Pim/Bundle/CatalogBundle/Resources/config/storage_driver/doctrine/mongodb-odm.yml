@@ -29,6 +29,7 @@ parameters:
     pim_catalog.event_subscriber.mongodb.ensure_indexes.class:                 Pim\Bundle\CatalogBundle\EventSubscriber\MongoDBODM\EnsureIndexesSubscriber
 
     pim_catalog.event_subscriber.metric_base_values.class:    Pim\Bundle\CatalogBundle\EventSubscriber\MongoDBODM\MetricBaseValuesSubscriber
+    pim_catalog.event_subscriber.remove_outdated_products_from_associations.class: Pim\Bundle\CatalogBundle\EventSubscriber\MongoDBODM\RemoveOutdatedProductsFromAssociationsSubscriber
 
     pim_catalog.mongodb_odm_query_generator.abstract_normalized_data.class:      Pim\Bundle\CatalogBundle\Doctrine\MongoDBODM\QueryGenerator\AbstractQueryGenerator
     pim_catalog.mongodb_odm_query_generator.attribute_as_label_updated.class:    Pim\Bundle\CatalogBundle\Doctrine\MongoDBODM\QueryGenerator\AttributeAsLabelUpdatedQueryGenerator
@@ -192,6 +193,7 @@ services:
             - [setEntityManager, ['@doctrine.orm.entity_manager']]
             - [setAttributeRepository, ['@pim_catalog.repository.attribute']]
             - [setFamilyRepository, ['@pim_catalog.repository.family']]
+            - [setCategoryRepository, ['@pim_catalog.repository.category']]
         tags:
             - { name: 'pim_repository' }
 
@@ -360,7 +362,15 @@ services:
         tags:
             - { name: pim_catalog.mongodb_odm_query_generator }
 
+    pim_catalog.event_subscriber.remove_outdated_products_from_associations:
+        class: %pim_catalog.event_subscriber.remove_outdated_products_from_associations.class%
+        arguments:
+            - '@pim_catalog.repository.product'
+            - '@pim_catalog.repository.association_type'
+        tags:
+            - { name: kernel.event_subscriber }
 
+    # filters
     pim_catalog.doctrine.query.filter.base:
         class: %pim_catalog.doctrine.query.filter.base.class%
         arguments:
@@ -417,7 +427,7 @@ services:
         tags:
             - { name: 'pim_catalog.doctrine.query.filter', priority: 30 }
 
-
+    # sorters
     pim_catalog.doctrine.query.sorter.base:
         class: %pim_catalog.doctrine.query.sorter.base.class%
         arguments:
